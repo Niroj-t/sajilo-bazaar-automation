@@ -1,0 +1,26 @@
+{
+  "name": "sajilo-bazaar-automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:chromium": "playwright test --project=chromium",
+    "test:headed": "playwright test --project=chromium --headed",
+    "test:ui": "playwright test --ui",
+    "test:trace": "playwright test --project=chromium --trace on",
+    "report": "playwright show-report",
+    "codegen": "playwright codegen file:///C:/Users/User/Downloads/app-20261007T052154Z-1-001/app/sajilo-bazaar.html"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^26.6.4"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.6"
+  }
+}

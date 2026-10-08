@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sajilo Bazaar</title>
+<style>
+  :root{
+    --crimson:#C8102E; --blue:#003893; --ink:#1F2433; --muted:#6B7080;
+    --bg:#F6F4EF; --card:#FFFFFF; --line:#E4E0D6; --ok:#1B7F4A; --warn:#B42318;
+    --esewa:#60BB46;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:"Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    background:var(--bg); color:var(--ink); font-size:15px;}
+  button{font:inherit; cursor:pointer;}
+  button:disabled{cursor:not-allowed; opacity:.55;}
+  header.top{background:var(--blue); color:#fff; display:flex; align-items:center;
+    gap:16px; padding:12px 24px; flex-wrap:wrap;}
+  .brand{font-weight:700; font-size:22px; letter-spacing:.2px;}
+  .brand span{color:#FFD166;}
+  .sale{margin:0; background:var(--crimson); padding:4px 12px; border-radius:20px;
+    font-size:13px; font-weight:600;}
+  .spacer{flex:1;}
+  .help-btn{background:transparent; color:#fff; border:1px solid rgba(255,255,255,.6);
+    border-radius:20px; padding:6px 14px;}
+  .cart-link{color:#fff; text-decoration:none; font-weight:600; background:rgba(255,255,255,.12);
+    padding:6px 14px; border-radius:20px;}
+  .cart-link span{display:inline-block; min-width:22px; text-align:center; background:#FFD166;
+    color:var(--ink); border-radius:11px; margin-left:6px; padding:0 6px;}
+  main{max-width:1100px; margin:0 auto; padding:24px; display:grid;
+    grid-template-columns:1.5fr 1fr; gap:24px; align-items:start;}
+  section.panel{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px;}
+  h2{margin:0 0 14px; font-size:19px;}
+  .loader{display:flex; align-items:center; gap:10px; color:var(--muted);}
+  .spinner{width:18px; height:18px; border:3px solid var(--line); border-top-color:var(--crimson);
+    border-radius:50%; animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  ul.products{list-style:none; margin:0; padding:0; display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:14px;}
+  ul.products li{border:1px solid var(--line); border-radius:10px; padding:14px; display:flex;
+    flex-direction:column; gap:6px;}
+  ul.products h3{margin:0; font-size:16px;}
+  .price{font-weight:700; color:var(--crimson);}
+  .meta{color:var(--muted); font-size:13px; margin:0;}
+  .stock{color:var(--warn); font-size:13px; font-weight:600; margin:0;}
+  .add{margin-top:auto; background:var(--crimson); color:#fff; border:none; border-radius:8px;
+    padding:8px 10px; font-weight:600;}
+  table.cart{width:100%; border-collapse:collapse; margin-bottom:12px;}
+  table.cart th, table.cart td{text-align:left; padding:8px 4px; border-bottom:1px solid var(--line);
+    font-size:14px; vertical-align:middle;}
+  table.cart th{color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase;}
+  .qty{display:inline-flex; align-items:center; gap:6px;}
+  .qty button{width:26px; height:26px; border:1px solid var(--line); background:#fff; border-radius:6px;}
+  .remove{background:none; border:none; color:var(--warn); text-decoration:underline; padding:0;}
+  .updating{color:var(--muted); font-size:13px; margin:0 0 8px;}
+  .field{display:flex; flex-direction:column; gap:4px; margin:12px 0;}
+  .field label{font-weight:600; font-size:13px;}
+  select, input{font:inherit; padding:8px; border:1px solid #C9C4B8; border-radius:8px; background:#fff;}
+  .promo-row{display:flex; gap:8px;}
+  .promo-row input{flex:1;}
+  .ghost{background:#fff; border:1px solid var(--blue); color:var(--blue); border-radius:8px; padding:8px 12px;}
+  .msg{font-size:13px; margin:4px 0 0; min-height:18px;}
+  .msg.ok{color:var(--ok);} .msg.bad{color:var(--warn);}
+  dl.summary{display:grid; grid-template-columns:1fr auto; gap:6px 12px; margin:16px 0;}
+  dl.summary dt{color:var(--muted);} dl.summary dd{margin:0; text-align:right; font-variant-numeric:tabular-nums;}
+  dl.summary .total{font-weight:700; color:var(--ink); font-size:17px;}
+  .primary{width:100%; background:var(--blue); color:#fff; border:none; border-radius:8px;
+    padding:12px; font-weight:700; font-size:15px;}
+  fieldset{border:none; margin:0; padding:0; min-width:0;}
+  #checkout, #order-done{grid-column:1 / -1;}
+  iframe.pay{width:100%; max-width:460px; height:400px; border:1px solid var(--line); border-radius:10px; background:#fff;}
+  .note{color:var(--muted); font-size:13px;}
+  .done h2{color:var(--ok);}
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--ink);
+    color:#fff; padding:12px 20px; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.2);}
+  .single{max-width:640px; margin:30px auto; display:block;}
+  .chat{list-style:none; padding:0; margin:0 0 12px; display:flex; flex-direction:column; gap:8px;}
+  .chat li{padding:8px 12px; border-radius:10px; background:#EEF2FA; max-width:85%;}
+  .chat li.me{background:#FFE9C7; align-self:flex-end;}
+  @media (max-width:820px){ main{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<!-- ======================= SHOP VIEW ======================= -->
+<div id="shop-view" hidden>
+  <header class="top">
+    <div class="brand">Sajilo <span>Bazaar</span></div>
+    <p class="sale" data-testid="sale-timer">Dashain Flash Sale ends in 04:59</p>
+    <div class="spacer"></div>
+    <button class="help-btn" id="help-btn" type="button">Need help? Chat with us</button>
+    <a class="cart-link" href="#cart">Cart <span data-testid="cart-count">0</span></a>
+  </header>
+
+  <main>
+    <section class="panel" aria-labelledby="products-h">
+      <h2 id="products-h">Products</h2>
+      <div class="loader" id="product-loader"><div class="spinner" aria-hidden="true"></div>Loading products...</div>
+      <ul class="products" id="product-list" aria-label="Products"></ul>
+    </section>
+
+    <section class="panel" id="cart" aria-labelledby="cart-h">
+      <h2 id="cart-h">Your cart</h2>
+      <fieldset id="cart-controls">
+        <p id="cart-empty">Your cart is empty.</p>
+        <p class="updating" id="cart-updating" hidden>Updating cart...</p>
+        <table class="cart" id="cart-table" hidden>
+          <thead><tr><th>Item</th><th>Qty</th><th>Amount</th><th><span hidden>Action</span></th></tr></thead>
+          <tbody id="cart-body"></tbody>
+        </table>
+
+        <div class="field">
+          <label for="delivery">Delivery area</label>
+          <select id="delivery">
+            <option value="">Choose an area</option>
+            <option value="valley">Inside Kathmandu Valley</option>
+            <option value="outside">Outside Kathmandu Valley</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="promo">Promo code</label>
+          <div class="promo-row">
+            <input id="promo" autocomplete="off" />
+            <button class="ghost" id="promo-apply" type="button">Apply</button>
+          </div>
+          <p class="msg" data-testid="promo-message"></p>
+        </div>
+      </fieldset>
+
+      <dl class="summary">
+        <dt>Subtotal</dt><dd data-testid="subtotal">Rs 0.00</dd>
+        <dt>Delivery</dt><dd data-testid="delivery-fee">Not selected</dd>
+        <dt>Discount</dt><dd data-testid="discount">Rs 0.00</dd>
+        <dt class="total">Total</dt><dd class="total" data-testid="order-total">Rs 0.00</dd>
+      </dl>
+      <button class="primary" id="checkout-btn" type="button" disabled>Proceed to checkout</button>
+    </section>
+
+    <section class="panel" id="checkout" aria-labelledby="checkout-h" hidden>
+      <h2 id="checkout-h">Checkout</h2>
+      <p>
+        <button class="ghost" id="gift-btn" type="button">Add a gift note</button>
+        <span class="note" data-testid="gift-note"></span>
+      </p>
+      <p class="note">Pay securely with eSewa below. This is a practice page and is not connected to the real eSewa service.</p>
+      <iframe class="pay" id="esewa-frame" title="eSewa payment"></iframe>
+    </section>
+
+    <section class="panel done" id="order-done" aria-labelledby="done-h" hidden>
+      <h2 id="done-h">Order placed!</h2>
+      <p>Order ID: <strong data-testid="order-id"></strong></p>
+      <p>Paid <strong data-testid="paid-amount"></strong> with eSewa.</p>
+      <p><a id="receipt-link" target="_blank" href="#">View receipt</a></p>
+    </section>
+  </main>
+
+  <div class="toast" role="status" data-testid="toast" hidden></div>
+</div>
+
+<!-- ======================= HELP VIEW (pop-up window) ======================= -->
+<div id="help-view" hidden>
+  <section class="panel single" aria-labelledby="help-h">
+    <h2 id="help-h">Sajilo Bazaar Support</h2>
+    <ul class="chat" id="chat" aria-label="Chat messages">
+      <li>Namaste! Connecting you to an agent...</li>
+    </ul>
+    <div class="promo-row">
+      <input id="chat-input" aria-label="Type your message" placeholder="Type your message" />
+      <button class="ghost" id="chat-send" type="button">Send</button>
+    </div>
+  </section>
+</div>
+
+<!-- ======================= RECEIPT VIEW (new tab) ======================= -->
+<div id="receipt-view" hidden>
+  <section class="panel single" aria-labelledby="receipt-h">
+    <h2 id="receipt-h">Receipt</h2>
+    <p>Order ID: <strong data-testid="receipt-order-id"></strong></p>
+    <table class="cart">
+      <thead><tr><th>Item</th><th>Qty</th><th>Amount</th></tr></thead>
+      <tbody id="receipt-body"></tbody>
+    </table>
+    <dl class="summary">
+      <dt>Delivery</dt><dd data-testid="receipt-delivery"></dd>
+      <dt>Discount</dt><dd data-testid="receipt-discount"></dd>
+      <dt class="total">Total paid</dt><dd class="total" data-testid="receipt-total"></dd>
+    </dl>
+    <p data-testid="receipt-note"></p>
+    <p class="note">Thank you for shopping with Sajilo Bazaar. Dhanyabad!</p>
+  </section>
+</div>
+
+<script>
+(function(){
+  /* ---------- shared helpers ---------- */
+  // Money is kept in paisa (integers) and only formatted for display.
+  // Nepali-style grouping: 1,23,456.00
+  function rs(paisa){
+    var neg = paisa < 0; paisa = Math.abs(paisa);
+    var rupees = Math.floor(paisa / 100), p = String(paisa % 100).padStart(2, '0');
+    var s = String(rupees), last3 = s.slice(-3), rest = s.slice(0, -3);
+    if(rest) rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',';
+    return (neg ? '- ' : '') + 'Rs ' + rest + last3 + '.' + p;
+  }
+  function el(tag, attrs, text){
+    var e = document.createElement(tag);
+    for(var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if(text != null) e.textContent = text;
+    return e;
+  }
+  var params = new URLSearchParams(location.search);
+  var view = params.get('view');
+
+  /* =================== HELP POP-UP =================== */
+  if(view === 'help'){
+    document.title = 'Sajilo Bazaar Support';
+    document.getElementById('help-view').hidden = false;
+    var chat = document.getElementById('chat');
+    setTimeout(function(){
+      chat.appendChild(el('li', null, 'Sita from Sajilo Bazaar has joined the chat.'));
+    }, 2000);
+    document.getElementById('chat-send').addEventListener('click', function(){
+      var input = document.getElementById('chat-input');
+      var text = input.value.trim();
+      if(!text) return;
+      chat.appendChild(el('li', { 'class': 'me' }, text));
+      input.value = '';
+      var typing = el('li', null, 'Sita is typing...');
+      chat.appendChild(typing);
+      setTimeout(function(){
+        typing.textContent = 'Thanks for your message. We will get back to you within 10 minutes.';
+      }, 1000);
+    });
+    return;
+  }
+
+  /* =================== RECEIPT TAB =================== */
+  if(view === 'receipt'){
+    document.title = 'Receipt | Sajilo Bazaar';
+    document.getElementById('receipt-view').hidden = false;
+    var order;
+    try { order = JSON.parse(decodeURIComponent(escape(atob(params.get('data'))))); }
+    catch(e){ document.getElementById('receipt-h').textContent = 'Receipt not found'; return; }
+    document.querySelector('[data-testid="receipt-order-id"]').textContent = order.id;
+    var body = document.getElementById('receipt-body');
+    order.items.forEach(function(it){
+      var tr = el('tr');
+      tr.appendChild(el('td', null, it.name));
+      tr.appendChild(el('td', null, String(it.qty)));
+      tr.appendChild(el('td', null, rs(it.price * it.qty)));
+      body.appendChild(tr);
+    });
+    document.querySelector('[data-testid="receipt-delivery"]').textContent = rs(order.delivery);
+    document.querySelector('[data-testid="receipt-discount"]').textContent = rs(order.discount);
+    document.querySelector('[data-testid="receipt-total"]').textContent = rs(order.total);
+    document.querySelector('[data-testid="receipt-note"]').textContent =
+      order.gift ? 'Gift note: "' + order.gift + '"' : 'No gift note.';
+    return;
+  }
+
+  /* =================== SHOP =================== */
+  document.getElementById('shop-view').hidden = false;
+
+  var PRODUCTS = [
+    { id: 'topi',     name: 'Dhaka Topi',           price: 85000,  meta: 'Handwoven, Palpa',      stock: 20 },
+    { id: 'pashmina', name: 'Pashmina Shawl',       price: 450000, meta: 'Pure pashmina, 70 x 200 cm', stock: 20 },
+    { id: 'lokta',    name: 'Lokta Paper Notebook', price: 35000,  meta: 'Handmade lokta paper',  stock: 20 },
+    { id: 'tea',      name: 'Ilam Orthodox Tea',    price: 60000,  meta: '250 g, first flush',    stock: 20 },
+    { id: 'bowl',     name: 'Singing Bowl',         price: 220000, meta: 'Hand-hammered, 15 cm',  stock: 1 },
+    { id: 'gundruk',  name: 'Gundruk',              price: 18000,  meta: '200 g, sun-dried',      stock: 20 }
+  ];
+  var DELIVERY = { valley: 10000, outside: 25000 };
+
+  var cart = [];            // [{ id, name, price, qty }]
+  var deliveryArea = '';
+  var deliveryReady = true; // false while "Calculating..."
+  var promoApplied = false;
+  var giftNote = '';
+  var checkoutOpen = false;
+
+  var $ = function(sel){ return document.querySelector(sel); };
+  var list = $('#product-list');
+  var countBadge = $('[data-testid="cart-count"]');
+  var toast = $('[data-testid="toast"]');
+  var toastTimer;
+
+  /* ---- flash-sale countdown: text changes every second ---- */
+  var left = 4 * 60 + 59;
+  setInterval(function(){
+    left = left > 0 ? left - 1 : 4 * 60 + 59;
+    var m = String(Math.floor(left / 60)).padStart(2, '0'), s = String(left % 60).padStart(2, '0');
+    $('[data-testid="sale-timer"]').textContent = 'Dashain Flash Sale ends in ' + m + ':' + s;
+  }, 1000);
+
+  /* ---- products arrive after a delay (simulated API call) ---- */
+  setTimeout(function(){
+    $('#product-loader').remove();
+    PRODUCTS.forEach(function(p){
+      var li = el('li');
+      li.appendChild(el('h3', null, p.name));
+      li.appendChild(el('p', { 'class': 'meta' }, p.meta));
+      li.appendChild(el('p', { 'class': 'price' }, rs(p.price)));
+      if(p.stock === 1) li.appendChild(el('p', { 'class': 'stock' }, 'Only 1 left'));
+      var btn = el('button', { 'class': 'add', type: 'button' }, 'Add to cart');
+      btn.addEventListener('click', function(){ addToCart(p, btn); });
+      p.button = btn;
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+  }, 1500);
+
+  function showToast(text){
+    toast.textContent = text;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toast.hidden = true; }, 2500);
+  }
+
+  function inCart(id){ return cart.filter(function(c){ return c.id === id; })[0]; }
+  function product(id){ return PRODUCTS.filter(function(p){ return p.id === id; })[0]; }
+
+  function syncSoldOut(){
+    PRODUCTS.forEach(function(p){
+      if(!p.button) return;
+      var line = inCart(p.id);
+      var sold = line && line.qty >= p.stock;
+      if(p.button.dataset.busy) return;
+      p.button.disabled = !!sold;
+      p.button.textContent = sold ? 'Sold out' : 'Add to cart';
+    });
+  }
+
+  function addToCart(p, btn){
+    btn.disabled = true;
+    btn.dataset.busy = '1';
+    btn.textContent = 'Adding...';
+    setTimeout(function(){
+      var line = inCart(p.id);
+      if(line) line.qty += 1; else cart.push({ id: p.id, name: p.name, price: p.price, qty: 1 });
+      delete btn.dataset.busy;
+      showToast(p.name + ' added to cart');
+      render();
+    }, 800);
+  }
+
+  function changeQty(id, delta){
+    var line = inCart(id);
+    $('#cart-updating').hidden = false;
+    setTimeout(function(){
+      line.qty += delta;
+      $('#cart-updating').hidden = true;
+      render();
+    }, 700);
+  }
+
+  function removeLine(id){
+    var line = inCart(id);
+    if(!window.confirm('Remove ' + line.name + ' from your cart?')) return;
+    cart = cart.filter(function(c){ return c.id !== id; });
+    showToast(line.name + ' removed from cart');
+    render();
+  }
+
+  function totals(){
+    var subtotal = cart.reduce(function(sum, c){ return sum + c.price * c.qty; }, 0);
+    var delivery = deliveryArea ? DELIVERY[deliveryArea] : 0;
+    var discount = promoApplied ? Math.round(subtotal * 0.10) : 0;
+    return { subtotal: subtotal, delivery: delivery, discount: discount,
+             total: subtotal + delivery - discount,
+             items: cart.reduce(function(n, c){ return n + c.qty; }, 0) };
+  }
+
+  function render(){
+    var t = totals();
+    countBadge.textContent = String(t.items);
+    var body = $('#cart-body');
+    body.innerHTML = '';
+    cart.forEach(function(c){
+      var p = product(c.id);
+      var tr = el('tr', { 'data-testid': 'cart-row' });
+      tr.appendChild(el('td', null, c.name));
+      var tdQ = el('td'), wrap = el('span', { 'class': 'qty' });
+      var minus = el('button', { type: 'button', 'aria-label': 'Decrease quantity' }, '-');
+      var plus  = el('button', { type: 'button', 'aria-label': 'Increase quantity' }, '+');
+      minus.disabled = c.qty <= 1;
+      plus.disabled = c.qty >= p.stock;
+      minus.addEventListener('click', function(){ changeQty(c.id, -1); });
+      plus.addEventListener('click', function(){ changeQty(c.id, 1); });
+      wrap.appendChild(minus);
+      wrap.appendChild(el('span', { 'data-testid': 'qty' }, String(c.qty)));
+      wrap.appendChild(plus);
+      tdQ.appendChild(wrap); tr.appendChild(tdQ);
+      tr.appendChild(el('td', { 'data-testid': 'line-total' }, rs(c.price * c.qty)));
+      var tdR = el('td'), rm = el('button', { type: 'button', 'class': 'remove' }, 'Remove');
+      rm.addEventListener('click', function(){ removeLine(c.id); });
+      tdR.appendChild(rm); tr.appendChild(tdR);
+      body.appendChild(tr);
+    });
+    $('#cart-empty').hidden = cart.length > 0;
+    $('#cart-table').hidden = cart.length === 0;
+
+    $('[data-testid="subtotal"]').textContent = rs(t.subtotal);
+    $('[data-testid="discount"]').textContent = rs(t.discount);
+    if(!deliveryReady){
+      $('[data-testid="delivery-fee"]').textContent = 'Calculating...';
+      $('[data-testid="order-total"]').textContent = 'Calculating...';
+    } else {
+      $('[data-testid="delivery-fee"]').textContent = deliveryArea ? rs(t.delivery) : 'Not selected';
+      $('[data-testid="order-total"]').textContent = rs(t.total);
+    }
+    $('#checkout-btn').disabled = cart.length === 0 || checkoutOpen;
+    syncSoldOut();
+  }
+
+  /* ---- delivery fee is "calculated" by the server after you pick an area ---- */
+  $('#delivery').addEventListener('change', function(e){
+    deliveryArea = e.target.value;
+    deliveryReady = false;
+    render();
+    setTimeout(function(){ deliveryReady = true; render(); }, 1000);
+  });
+
+  /* ---- promo code is checked by the server ---- */
+  $('#promo-apply').addEventListener('click', function(){
+    var code = $('#promo').value.trim().toUpperCase();
+    var msg = $('[data-testid="promo-message"]');
+    msg.className = 'msg';
+    msg.textContent = 'Checking code...';
+    setTimeout(function(){
+      if(code === 'DASHAIN10'){
+        promoApplied = true;
+        msg.className = 'msg ok';
+        msg.textContent = 'DASHAIN10 applied: 10% off your items';
+      } else {
+        promoApplied = false;
+        msg.className = 'msg bad';
+        msg.textContent = 'Sorry, that code is not valid.';
+      }
+      render();
+    }, 1200);
+  });
+
+  /* ---- help opens in a pop-up window ---- */
+  $('#help-btn').addEventListener('click', function(){
+    window.open('?view=help', 'sajilo-help', 'width=440,height=600');
+  });
+
+  /* ---- checkout ---- */
+  $('#checkout-btn').addEventListener('click', function(){
+    if(!deliveryArea){
+      window.alert('Please choose a delivery area before checkout.');
+      return;
+    }
+    if(!deliveryReady) return;
+    checkoutOpen = true;
+    $('#cart-controls').disabled = true;
+    render();
+    $('#checkout').hidden = false;
+    loadEsewa(totals().total);
+    $('#checkout').scrollIntoView();
+  });
+
+  $('#gift-btn').addEventListener('click', function(){
+    var text = window.prompt('Write a short gift note');
+    var out = $('[data-testid="gift-note"]');
+    if(text === null || !text.trim()){ giftNote = ''; out.textContent = 'No gift note added.'; return; }
+    giftNote = text.trim();
+    out.textContent = 'Gift note: "' + giftNote + '"';
+  });
+
+  /* ---- the eSewa payment page lives inside an iframe ---- */
+  function loadEsewa(amount){
+    var amt = rs(amount);
+    var doc =
+'<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+'body{font-family:"Segoe UI",system-ui,Arial,sans-serif;margin:0;color:#1F2433;}' +
+'.bar{background:#60BB46;color:#fff;padding:12px 18px;font-weight:700;font-size:20px;}' +
+'.wrap{padding:16px 18px;} label{display:block;font-weight:600;font-size:13px;margin:10px 0 4px;}' +
+'input{width:100%;padding:8px;border:1px solid #C9C4B8;border-radius:8px;font:inherit;box-sizing:border-box;}' +
+'button{margin-top:14px;width:100%;padding:10px;background:#60BB46;color:#fff;border:none;border-radius:8px;font-weight:700;font:inherit;cursor:pointer;}' +
+'button:disabled{opacity:.6;cursor:not-allowed;} .err{color:#B42318;font-size:13px;min-height:18px;margin:8px 0 0;}' +
+'.ok{color:#1B7F4A;font-weight:700;font-size:18px;} .muted{color:#6B7080;font-size:13px;}' +
+'</style></head><body>' +
+'<div class="bar">eSewa</div><div class="wrap">' +
+'<p class="muted">Practice payment page</p>' +
+'<p>Merchant: <strong>Sajilo Bazaar</strong><br>Amount: <strong data-testid="pay-amount">' + amt + '</strong></p>' +
+'<p id="connecting">Connecting to eSewa...</p>' +
+'<form id="f" hidden>' +
+'<label for="eid">eSewa ID</label><input id="eid" autocomplete="off" placeholder="Mobile number">' +
+'<label for="mpin">MPIN</label><input id="mpin" type="password" autocomplete="off">' +
+'<button type="submit" id="pay">Pay now</button>' +
+'<p class="err" role="alert" id="err"></p></form>' +
+'<p class="ok" id="ok" hidden>Payment successful</p>' +
+'</div><script>' +
+'setTimeout(function(){document.getElementById("connecting").remove();document.getElementById("f").hidden=false;},1000);' +
+'document.getElementById("f").addEventListener("submit",function(e){e.preventDefault();' +
+'var b=document.getElementById("pay"),err=document.getElementById("err");' +
+'err.textContent="";b.disabled=true;b.textContent="Processing...";' +
+'var good=document.getElementById("eid").value.trim()==="9841234567"&&document.getElementById("mpin").value==="1234";' +
+'setTimeout(function(){if(!good){b.disabled=false;b.textContent="Pay now";err.textContent="Incorrect eSewa ID or MPIN.";return;}' +
+'document.getElementById("f").remove();document.getElementById("ok").hidden=false;' +
+'parent.postMessage({type:"esewa-paid"},"*");},1500);});' +
+'<\/script></body></html>';
+    $('#esewa-frame').srcdoc = doc;
+  }
+
+  window.addEventListener('message', function(e){
+    if(!e.data || e.data.type !== 'esewa-paid') return;
+    var t = totals();
+    var id = 'SB-' + String(Math.floor(100000 + Math.random() * 900000));
+    var order = { id: id, total: t.total, delivery: t.delivery, discount: t.discount, gift: giftNote,
+      items: cart.map(function(c){ return { name: c.name, qty: c.qty, price: c.price }; }) };
+    $('[data-testid="order-id"]').textContent = id;
+    $('[data-testid="paid-amount"]').textContent = rs(t.total);
+    var data = btoa(unescape(encodeURIComponent(JSON.stringify(order))));
+    $('#receipt-link').href = '?view=receipt&data=' + encodeURIComponent(data);
+    $('#checkout').hidden = true;
+    $('#order-done').hidden = false;
+    $('#order-done').scrollIntoView();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
